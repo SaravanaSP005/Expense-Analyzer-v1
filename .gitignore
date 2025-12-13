@@ -7,6 +7,6 @@ __pycache__/
 venv/
 
 # Excel and PDF files
-#.xlsx
+.xlsx
 *.pdf
 /output/
