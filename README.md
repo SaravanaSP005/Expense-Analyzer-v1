@@ -1,18 +1,18 @@
-**Expense Analyzer v1**
+Expense Analyzer v1
 
-Expense Analyzer v1 is a simple tool to manage shared expenses among users. It allows you to add users, upload expenses via Excel, and automatically calculate how expenses should be split. Additionally, it supports real-time expense tracking and email notifications for users.
+Expense Analyzer v1 is a simple tool to manage shared expenses among users. It allows you to add users, upload expenses via Excel, and automatically calculate how expenses should be split. Additionally, it supports sending email notifications with expense summaries.
 
-**Features**
+Features
 
-User Management: Add and manage users in the database.
+User Management: Add and manage users locally (currently not connected to a database).
 
-Excel Upload: Prepare and upload expenses in an Excel file.
+Excel Upload: Prepare and upload expenses using an Excel file.
 
 Expense Splitting: Automatically calculates how expenses are split among users.
 
-Real-Time Updates: Users in the database receive updates as new expenses are added.
-
 Email Notifications: Send emails to users with expense summaries.
+
+Note: Database connection and real-time updates are not implemented in this version.
 
 Example Excel Format
 Date	Description	Amount	Paid By	Shared With
@@ -20,15 +20,17 @@ Date	Description	Amount	Paid By	Shared With
 2025-12-02	Dinner	60	Bob	Bob, Alice
 2025-12-03	Utilities	150	Carol	Alice, Bob, Carol
 
-Date: Date of the expense.
+Columns:
 
-Description: Short description of the expense.
+Date: Date of the expense
 
-Amount: Total amount of the expense.
+Description: Short description of the expense
 
-Paid By: User who paid the expense.
+Amount: Total amount of the expense
 
-Shared With: Users sharing the expense (comma-separated).
+Paid By: User who paid the expense
+
+Shared With: Users sharing the expense (comma-separated)
 
 Getting Started
 Prerequisites
@@ -39,23 +41,21 @@ pip (Python package manager)
 
 SMTP server credentials for email notifications
 
-Database setup (e.g., SQLite, MySQL, or PostgreSQL)
-
 Installation
-using git clone and branch Dev
 
-Navigate to the project directory:
+Clone the repository:
 
-cd expense-analyzer-
+git clone https://github.com/SaravanaSP005/Expense-Analyzer-v1.git
+cd Expense-Analyzer-v1
 
-**
+
 Install dependencies:
-**
+
 pip install -r requirements.txt
 
 Usage
 
-Add users to the database.
+Add users to the system (locally, no database).
 
 Prepare your expense Excel file following the required format.
 
@@ -63,12 +63,12 @@ Upload the Excel file via the system interface.
 
 View calculated splits for each user.
 
-Users receive real-time updates and emails when new expenses are added.
+Users receive email notifications with expense summaries.
 
-**Contributing**
+Contributing
 
 Contributions are welcome! Please fork the repository, make your changes, and submit a pull request.
 
-**License**
+License
 
 This project is licensed under the MIT License.
