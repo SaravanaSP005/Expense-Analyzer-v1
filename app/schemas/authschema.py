@@ -11,7 +11,9 @@ class LoginResponse(BaseModel):
     token_type: str
     user_id: int
     tenant_id: int
+    user_name : str
 
 class CurrentUser(BaseModel):
     user_id: int
+    user_name : str
     tenant_id: int

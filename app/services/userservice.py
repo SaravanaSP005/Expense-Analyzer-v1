@@ -4,6 +4,7 @@ from app.services.passwordservice import PasswordService
 from app.schemas.userschema import UserCreateRequest
 from fastapi import HTTPException, status
 
+
 class UserService:
 
     def __init__(self,user_repository: UserRepository,password_service: PasswordService,):
@@ -14,6 +15,9 @@ class UserService:
 
         return self.user_repository.get_by_email(email,1)
 
+    
+    #login user details
+    
     def login_user(self,email:str,password : str ) -> UserEntity | None:
 
         loginuser = self.user_repository.get_by_email(email,1)
@@ -30,7 +34,7 @@ class UserService:
 
     # Create User Function
 
-    def create_user(self,user_request : UserCreateRequest):
+    def create_user(self,user_request : UserCreateRequest) -> UserEntity | None:
         existing_user = self.user_repository.get_by_email(user_request.email,user_request.tenant_id)
 
         if existing_user is not None:
@@ -39,7 +43,17 @@ class UserService:
                 detail="User email already exists",
             )
 
-        
+        return self.user_repository.add(user_request)
 
-        pass
-        
+    #User Update 
+
+    def update_user(self,user_request : UserCreateRequest) -> UserEntity | None:
+            existing_user = self.user_repository.get_by_email(user_request.email,user_request.tenant_id)
+    
+            if existing_user is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="User email already exists",
+                )
+    
+            return self.user_repository.add(user_request)

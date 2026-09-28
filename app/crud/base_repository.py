@@ -28,10 +28,7 @@ class BaseRepository(Generic[T]):
         self.db.refresh(entity)
         return entity
 
-    def first(
-        self,
-        *conditions: Any,
-    ) -> T | None:
+    def first(self,*conditions: Any) -> T | None:
 
         stmt = (
             select(T)
@@ -41,10 +38,7 @@ class BaseRepository(Generic[T]):
 
         return self.db.scalar(stmt)
 
-    def list(
-        self,
-        *conditions: Any,
-    ) -> list[T]:
+    def list(self,*conditions: Any) -> list[T]:
 
         stmt = select(T).where(*conditions)
 

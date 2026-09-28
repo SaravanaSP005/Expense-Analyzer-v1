@@ -12,3 +12,7 @@ class UserResponse(BaseResponse):
     username: str
     email: str
     display_name: str
+
+class EnableResponse():
+    id : int 
+    active : bool

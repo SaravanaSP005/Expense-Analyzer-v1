@@ -1,8 +1,6 @@
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-
-from app.core.database import Base
+from app.models.basedb import BaseEntity
 
 class TenantEntity(BaseEntity):
     __tablename__ = "tenant"

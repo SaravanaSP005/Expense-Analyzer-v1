@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.crud.userrepository import UserRepository
+from app.crud.productrepository import ProductRepository
 
 
 
@@ -17,9 +18,9 @@ class RepositoryFactory:
     # def tenants(self) -> TenantRepository:
     #     return TenantRepository(self.db)
 
-    # @property
-    # def products(self) -> ProductRepository:
-    #     return ProductRepository(self.db)
+    @property
+    def products(self) -> ProductRepository:
+        return ProductRepository(self.db)
 
     # @property
     # def expenses(self) -> ExpenseRepository:

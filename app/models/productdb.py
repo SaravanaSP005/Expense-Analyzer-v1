@@ -1,7 +1,9 @@
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String,Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from decimal import Decimal
 from app.models.basedb import BaseEntity
+from pydantic_settings import BaseSettings
+
 from app.models.tenantdb import TenantEntity
 
 class ProductEntity(BaseEntity):

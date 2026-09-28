@@ -27,6 +27,7 @@ def get_current_user(
 
     user_id = payload.get("sub")
     tenant_id = payload.get("tenant_id")
+    user_name = payload.get("user_name")
 
     if user_id is None or tenant_id is None:
         raise HTTPException(
@@ -40,4 +41,5 @@ def get_current_user(
     return {
         "user_id": int(user_id),
         "tenant_id": int(tenant_id),
+        "user_name": user_name
     }
