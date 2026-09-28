@@ -3,53 +3,133 @@ from app.models.expensedetailsdb import ExpenseDetails
 from app.crud.expenserepository import ExpenseRepository
 from app.schemas.expenselistschema import ExpenseListCreateRequest
 from datetime import datetime, timezone
-from app.exceptions.exceptions import ( NotFoundException,ConflictException)
+from app.exceptions.exceptions import NotFoundException, ConflictException, ValidationException
 
 class ExpenseService:
-    def __int__(self,expense_repository : ExpenseRepository):
+    def __init__(self, expense_repository: ExpenseRepository):
         self.expense_repository = expense_repository
 
-    # Add the Expense and Expense details list
-    def expense_save(self,request_model:ExpenseListCreateRequest )-> ExpenseListEntity | None:
-        expense_details = ExpenseDetails
-        expense_list = ExpenseListEntity
-
-        expense_list.id = request_model.id
+    # Create the Expense and Expense details list
+    def expense_save(self, request_model: ExpenseListCreateRequest, user_id: int) -> ExpenseListEntity:
+        expense_list = ExpenseListEntity()
+        
+        if hasattr(request_model, 'id') and request_model.id:
+            expense_list.id = request_model.id
+            
         expense_list.active = True
         expense_list.tenant_id = request_model.tenant_id
-        expense_list.create_user_id = request_model.create_user_id
-        expense_list.create_datetime = datetime.now(timezone.utc) 
+        expense_list.create_user_id = user_id
+        expense_list.create_datetime = datetime.now(timezone.utc)
         expense_list.expense_config_id = request_model.expense_config_id
+        expense_list.product_id = request_model.product_id
+        expense_list.quantity = request_model.quantity
+        expense_list.amount = request_model.amount
 
-
-        #split and save the Share holders Details
-        each_person_amount = request_model.amount / request_model.expense_details.shareholder_id.count()
-        #calculate of the share holders each preson shares. and create the new response for it.
+        # split and save the Share holders Details
+        shareholders = request_model.expense_details.shareholder_id
+        if not shareholders:
+            raise ValidationException(
+                message="Shareholders list cannot be empty",
+                code="VALIDATION_ERROR",
+                field="shareholder_id"
+            )
+            
+        each_person_amount = request_model.amount / len(shareholders)
         
-        for item in request_model.expense_details.shareholder_id:
-            expense_details.amount = each_person_amount
-            expense_details.shareholder_id = item
-            expense_details.active = True
-            expense_details.create_user_id = request_model.create_user_id
-            expense_details.create_datetime = datetime.now(timezone.utc)
-            expense_details.tenant_id = request_model.tenant_id
-            expense_details.expense_list_id = request_model.id
-
-            expense_list.expense_details = expense_details
+        expense_list.expense_details = []
+        for shareholder_id in shareholders:
+            expense_detail = ExpenseDetails()
+            expense_detail.amount = each_person_amount
+            expense_detail.shareholder_id = shareholder_id
+            expense_detail.active = True
+            expense_detail.create_user_id = user_id
+            expense_detail.create_datetime = datetime.now(timezone.utc)
+            expense_detail.tenant_id = request_model.tenant_id
+            
+            expense_list.expense_details.append(expense_detail)
 
         return self.expense_repository.add(expense_list)
 
-    
-    # Get teh expense List based active 
-    def get_expense_list(self,tenant_Id : int,active : bool | None) ->ExpenseListEntity | None:
-        return self.expense_repository.list(ExpenseListEntity.tenant_id == tenant_Id, ExpenseListEntity.active == active)
+    # Get single Expense List by ID
+    def get_expense_by_id(self, tenant_id: int, id: int) -> ExpenseListEntity:
+        expense_list = self.expense_repository.first(
+            ExpenseListEntity.tenant_id == tenant_id, 
+            ExpenseListEntity.id == id
+        )
+        if expense_list is None:
+            raise NotFoundException(
+                message="Expense list not found",
+                code="EXPENSE_NOT_FOUND",
+                field="id",
+            )
+        return expense_list
 
-    
+    # Get the expense List based on active status
+    def get_expense_list(self, tenant_id: int, active: bool | None = None) -> list[ExpenseListEntity]:
+        conditions = [ExpenseListEntity.tenant_id == tenant_id]
+        if active is not None:
+            conditions.append(ExpenseListEntity.active == active)
+            
+        return self.expense_repository.list(*conditions)
 
-    #disable the Expense and the Expense Details List also. 
-    def disable(self,tenant_Id : int,id : int,active : bool,login_user : str) ->ExpenseListEntity | None:
+    # Update the Expense List and Expense Details
+    def update_expense(self, tenant_id: int, id: int, request_model: ExpenseListCreateRequest, user_id: int) -> ExpenseListEntity:
+        expense_list = self.expense_repository.first(
+            ExpenseListEntity.tenant_id == tenant_id, 
+            ExpenseListEntity.id == id
+        )
 
-        expense_list = self.expense_repository.first(ExpenseListEntity.tenant_id == tenant_Id, ExpenseListEntity.id == id)
+        if expense_list is None:
+            raise NotFoundException(
+                message="Expense list not found",
+                code="EXPENSE_NOT_FOUND",
+                field="id",
+            )
+
+        expense_list.expense_config_id = request_model.expense_config_id
+        expense_list.product_id = request_model.product_id
+        expense_list.quantity = request_model.quantity
+        expense_list.amount = request_model.amount
+        expense_list.last_user_id = user_id
+        expense_list.last_modified = datetime.now(timezone.utc)
+
+        # Update shareholders
+        shareholders = request_model.expense_details.shareholder_id
+        if not shareholders:
+            raise ValidationException(
+                message="Shareholders list cannot be empty",
+                code="VALIDATION_ERROR",
+                field="shareholder_id"
+            )
+
+        # For simplicity, we mark old ones as inactive and add new ones
+        if expense_list.expense_details:
+            for item in expense_list.expense_details:
+                item.active = False
+                item.last_user_id = user_id
+                item.last_modified = datetime.now(timezone.utc)
+                
+        each_person_amount = request_model.amount / len(shareholders)
+        
+        for shareholder_id in shareholders:
+            expense_detail = ExpenseDetails()
+            expense_detail.amount = each_person_amount
+            expense_detail.shareholder_id = shareholder_id
+            expense_detail.active = True
+            expense_detail.create_user_id = user_id
+            expense_detail.create_datetime = datetime.now(timezone.utc)
+            expense_detail.tenant_id = request_model.tenant_id
+            
+            expense_list.expense_details.append(expense_detail)
+
+        return self.expense_repository.add(expense_list)
+
+    # Disable the Expense and the Expense Details List
+    def disable(self, tenant_id: int, id: int, active: bool, user_id: int) -> ExpenseListEntity:
+        expense_list = self.expense_repository.first(
+            ExpenseListEntity.tenant_id == tenant_id, 
+            ExpenseListEntity.id == id
+        )
 
         if expense_list is None:
             raise NotFoundException(
@@ -61,18 +141,14 @@ class ExpenseService:
         if expense_list.expense_details is not None:
             for item in expense_list.expense_details:
                 item.active = active
-                item.last_user =login_user
+                item.last_user_id = user_id
                 item.last_modified = datetime.now(timezone.utc)
 
         expense_list.active = active 
-        expense_list.last_user = login_user 
+        expense_list.last_user_id = user_id
         expense_list.last_modified = datetime.now(timezone.utc)
 
-
-        return self.expense_repository.add(expense_list)
-
-
-        
+        return self.expense_repository.add(expense_list)        
 
 
 
